@@ -1,0 +1,49 @@
+version: '3'
+
+services:
+
+  django:
+    build: .
+    command: python manage.py runserver 0.0.0.0:8088
+    volumes:
+      - .:/source
+    ports:
+      - '8088:8088'
+    env_file:
+      - .env
+    restart: on-failure
+
+  redis:
+    image: redis:alpine
+    restart: on-failure
+    ports:
+      - "6380:6379"
+
+  celery_beat:
+    command: celery -A menu_api beat -l info
+    build: .
+    environment:
+      - CELERY_REDIS=${CELERY_RESULT_BACKEND}
+    depends_on:
+      - redis
+      - django
+    env_file:
+      - .env
+
+    volumes:
+      - .:/source
+    restart: on-failure
+
+  celery_worker:
+    command: celery -A menu_api worker -l info
+    build: .
+    environment:
+      - CELERY_REDIS=${CELERY_RESULT_BACKEND}
+    depends_on:
+      - redis
+      - django
+    env_file:
+      - .env
+    volumes:
+      - .:/source
+    restart: on-failure
