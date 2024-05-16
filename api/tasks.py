@@ -8,7 +8,7 @@ from selenium import webdriver
 
 def parse_product_info(driver, url):
     driver.get(url)
-    time.sleep(2)
+    time.sleep(5)
 
     soup = BeautifulSoup(driver.page_source, 'html.parser')
     product_name = soup.find('span', class_='cmp-product-details-main__heading-title').text.strip()
@@ -53,32 +53,31 @@ def parse_product_info(driver, url):
 
 @shared_task
 def parse_mcdonalds_menu():
-    driver = webdriver.Chrome()
+    driver = webdriver.Remote(
+        command_executor='http://selenium:4444/wd/hub',
+        options=webdriver.FirefoxOptions()
+    )
 
-    try:
-        url = 'https://www.mcdonalds.com/ua/uk-ua/eat/fullmenu.html'
-        driver.get(url)
-        soup = BeautifulSoup(driver.page_source, 'html.parser')
-        product_links = []
-        for item in soup.find_all('li', class_='cmp-category__item'):
-            link = item.find('a', class_='cmp-category__item-link')['href']
-            product_links.append(link)
-        
-        products_info = []
-        for link in product_links:
-            product_info = parse_product_info(driver, f"https://www.mcdonalds.com{link}")
-            if product_info:
-                products_info.append(product_info)
-        
-        save_path = 'data'
-        if not os.path.exists(save_path):
-            os.makedirs(save_path)
-        json_file = os.path.join(save_path, 'mcdonalds_menu.json')
-        with open(json_file, 'w', encoding='utf-8') as f:
-            json.dump(products_info, f, ensure_ascii=False, indent=4)
-        
-        return "Parsing completed. JSON file saved successfully."
-    finally:
-        driver.quit()
+    url = 'https://www.mcdonalds.com/ua/uk-ua/eat/fullmenu.html'
+    driver.get(url)
+    soup = BeautifulSoup(driver.page_source, 'html.parser')
+    product_links = []
+    for item in soup.find_all('li', class_='cmp-category__item'):
+        link = item.find('a', class_='cmp-category__item-link')['href']
+        product_links.append(link)
     
-parse_mcdonalds_menu()
+    products_info = []
+    for link in product_links:
+        product_info = parse_product_info(driver, f"https://www.mcdonalds.com{link}")
+        if product_info:
+            products_info.append(product_info)
+    
+    save_path = 'data'
+    if not os.path.exists(save_path):
+        os.makedirs(save_path)
+    json_file = os.path.join(save_path, 'mcdonalds_menu.json')
+    with open(json_file, 'w', encoding='utf-8') as f:
+        json.dump(products_info, f, ensure_ascii=False, indent=4)
+    
+    return "Parsing completed. JSON file saved successfully."
+    

@@ -10,6 +10,6 @@ app.autodiscover_tasks()
 app.conf.beat_schedule = {
     'parse-mcdonalds-menu': {
         'task': 'api.tasks.parse_mcdonalds_menu',
-        'schedule': crontab(hour=0, minute=0),
+        'schedule': crontab(minute='*/2'),
     },
 }

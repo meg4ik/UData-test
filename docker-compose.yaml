@@ -19,6 +19,12 @@ services:
     ports:
       - "6380:6379"
 
+  selenium:
+    image: selenium/standalone-firefox
+    ports:
+      - "4444:4444"
+    restart: on-failure
+
   celery_beat:
     command: celery -A menu_api beat -l info
     build: .
@@ -27,9 +33,9 @@ services:
     depends_on:
       - redis
       - django
+      - selenium
     env_file:
       - .env
-
     volumes:
       - .:/source
     restart: on-failure
@@ -42,6 +48,7 @@ services:
     depends_on:
       - redis
       - django
+      - selenium
     env_file:
       - .env
     volumes:
