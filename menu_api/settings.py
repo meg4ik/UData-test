@@ -130,7 +130,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 APPEND_SLASH = True
 
-CELERY_APP = 'devit_proj_backend'
+CELERY_APP = 'menu_api'
 CELERY_TIMEZONE = os.environ.get('CELERY_TIMEZONE')
 CELERY_TASK_TRACK_STARTED = os.environ.get('CELERY_TASK_TRACK_STARTED')
 CELERY_BROKER_URL = os.environ.get('CELERY_BROKER_URL')
