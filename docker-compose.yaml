@@ -1,0 +1,75 @@
+version: '3'
+
+services:
+
+  django:
+    build: .
+    command: python manage.py runserver 0.0.0.0:8088
+    volumes:
+      - .:/source
+    ports:
+      - '8088:8088'
+    env_file:
+      - .env
+    restart: on-failure
+    networks:
+      - selenium_net
+
+  redis:
+    image: redis:alpine
+    restart: on-failure
+    ports:
+      - "6380:6379"
+    networks:
+      - selenium_net
+
+  seleniums:
+    image: selenium/standalone-chrome
+    ports:
+      - "4444:4444"
+    environment:
+      - GRID_TIMEOUT=600
+    command: >
+      bash -c 'SE_OPTS="--session-request-timeout 600" && 
+               /opt/bin/entry_point.sh'
+    shm_size: 2g
+    restart: on-failure
+    networks:
+      - selenium_net
+
+  celery_beat:
+    command: celery -A menu_api beat -l info
+    build: .
+    environment:
+      - CELERY_REDIS=${CELERY_RESULT_BACKEND}
+    depends_on:
+      - redis
+      - django
+      - seleniums
+    env_file:
+      - .env
+    volumes:
+      - .:/source
+    restart: on-failure
+    networks:
+      - selenium_net
+
+  celery_worker:
+    command: celery -A menu_api worker -l info
+    build: .
+    environment:
+      - CELERY_REDIS=${CELERY_RESULT_BACKEND}
+    depends_on:
+      - redis
+      - django
+      - seleniums
+    env_file:
+      - .env
+    volumes:
+      - .:/source
+    restart: on-failure
+    networks:
+      - selenium_net
+
+networks:
+  selenium_net:
