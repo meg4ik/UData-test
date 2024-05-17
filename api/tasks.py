@@ -8,7 +8,7 @@ from selenium import webdriver
 
 def parse_product_info(driver, url):
     driver.get(url)
-    time.sleep(5)
+    time.sleep(4)
 
     soup = BeautifulSoup(driver.page_source, 'html.parser')
     product_name = soup.find('span', class_='cmp-product-details-main__heading-title').text.strip()
@@ -53,9 +53,15 @@ def parse_product_info(driver, url):
 
 @shared_task
 def parse_mcdonalds_menu():
+    options = webdriver.ChromeOptions()
+    options.add_argument('--ignore-ssl-errors=yes')
+    options.add_argument('--ignore-certificate-errors')
+    options.add_argument('--headless')
+    options.add_argument('--no-sandbox')
+    options.add_argument('--disable-dev-shm-usage')
     driver = webdriver.Remote(
-        command_executor='http://selenium:4444/wd/hub',
-        options=webdriver.FirefoxOptions()
+        command_executor='http://seleniums:4444/wd/hub',
+        options=options
     )
 
     url = 'https://www.mcdonalds.com/ua/uk-ua/eat/fullmenu.html'
@@ -79,5 +85,5 @@ def parse_mcdonalds_menu():
     with open(json_file, 'w', encoding='utf-8') as f:
         json.dump(products_info, f, ensure_ascii=False, indent=4)
     
-    return "Parsing completed. JSON file saved successfully."
+    driver.quit()
     
